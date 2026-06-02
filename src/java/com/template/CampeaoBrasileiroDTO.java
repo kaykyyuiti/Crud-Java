@@ -1,4 +1,4 @@
-package model.dto;
+package com.template;
 
 public class CampeaoBrasileiroDTO {
 
@@ -8,6 +8,9 @@ public class CampeaoBrasileiroDTO {
     private String genero;
     private int idade;
     private int sequenciaVitorias;
+
+    public CampeaoBrasileiroDTO() {
+    }
 
     public int getId() {
         return id;
