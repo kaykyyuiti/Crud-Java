@@ -10,16 +10,17 @@ public class Main extends Application
     @Override
     public void start(Stage stage) throws Exception
     {
-        FXMLLoader loader = new FXMLLoader(Main.class.getResource("main.fxml"));
-        Scene scene = new Scene(loader.load(),600,400);
+        // Força a leitura do arquivo relativo à classe Main na mesma pasta
+        FXMLLoader loader = new FXMLLoader(Main.class.getResource("cadastroLutador.fxml"));
+        Scene scene = new Scene(loader.load(), 600, 400);
 
-        stage.setTitle("Hello");
+        stage.setTitle("Cadastro de Lutadores");
         stage.setScene(scene);
         stage.show();
     }
 
     public static void main(String[] args)
     {
-        launch();
+        launch(args);
     }
 }
