@@ -240,6 +240,8 @@ public class MainController implements Initializable {
 
         btnAtualizar.setDisable(true);
         btnExcluir.setDisable(true);
+
+        txtNome.requestFocus();
     }
 
     private void permitirSomenteNumeros(TextField campo) {
