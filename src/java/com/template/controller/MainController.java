@@ -7,6 +7,7 @@ import java.util.ResourceBundle;
 import com.template.model.dao.CampeaoBrasileiroDAO;
 import com.template.model.dto.CampeaoBrasileiroDTO;
 import com.template.util.DialogUtil;
+import com.template.validator.LutadorValidator;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -36,12 +37,6 @@ public class MainController implements Initializable {
 
     @FXML
     private ComboBox<String> cbGenero;
-
-    @FXML
-    private Label lblMensagem;
-
-    @FXML
-    private Label lblTotal;
 
     @FXML
     private Button btnAtualizar;
@@ -110,6 +105,10 @@ public class MainController implements Initializable {
         btnAtualizar.setDisable(true);
         btnExcluir.setDisable(true);
 
+        tblLutador.getSelectionModel().selectedItemProperty().addListener((obs, antigo, novo) -> {
+            carregarCampos();
+        });
+
         carregarLutadores();
     }
 
@@ -119,8 +118,6 @@ public class MainController implements Initializable {
         if (!DialogUtil.mostrarConfirmacao(
                 "Adicionar Lutador",
                 "Deseja realmente cadastrar este lutador?")) {
-
-            lblMensagem.setText("Cadastro cancelado.");
             return;
         }
 
@@ -136,7 +133,6 @@ public class MainController implements Initializable {
                     && lutadorExistente.getCategoria().equalsIgnoreCase(lutadorParaCadastrar.getCategoria())) {
 
                 DialogUtil.mostrarErro("Lutador Duplicado", "O lutador " + lutadorParaCadastrar.getNome() + " já está cadastrado nesta categoria!");
-                lblMensagem.setText("Lutador já existe nesta categoria!");
                 return;
             }
         }
@@ -146,7 +142,6 @@ public class MainController implements Initializable {
         carregarLutadores();
         limparCampos();
 
-        lblMensagem.setText("Lutador cadastrado com sucesso!");
         DialogUtil.mostrarInformacao("Sucesso", "Lutador cadastrado com sucesso!");
     }
 
@@ -156,8 +151,6 @@ public class MainController implements Initializable {
         if (!DialogUtil.mostrarConfirmacao(
                 "Atualizar Lutador",
                 "Deseja salvar as alterações deste lutador?")) {
-
-            lblMensagem.setText("Atualização cancelada.");
             return;
         }
 
@@ -171,16 +164,13 @@ public class MainController implements Initializable {
         carregarLutadores();
         limparCampos();
 
-        lblMensagem.setText("Lutador atualizado com sucesso!");
         DialogUtil.mostrarInformacao("Sucesso", "Lutador atualizado com sucesso!");
     }
 
     @FXML
     private void btnExcluirAction(ActionEvent eventoBotaoExcluir) {
 
-        if (txtId.getText().isEmpty()) {
-            DialogUtil.mostrarErro("Seleção Inválida", "Selecione um lutador na tabela para excluir.");
-            lblMensagem.setText("Selecione um lutador.");
+        if (!LutadorValidator.validarSelecaoParaExcluir(txtId.getText())) {
             return;
         }
 
@@ -193,8 +183,6 @@ public class MainController implements Initializable {
         if (!DialogUtil.mostrarConfirmacao(
                 "Excluir Lutador",
                 "Deseja realmente excluir:\n\n" + nomeLutadorExclusao + "?")) {
-
-            lblMensagem.setText("Exclusão cancelada.");
             return;
         }
 
@@ -204,7 +192,6 @@ public class MainController implements Initializable {
         carregarLutadores();
         limparCampos();
 
-        lblMensagem.setText("Lutador excluído com sucesso!");
         DialogUtil.mostrarInformacao("Sucesso", "Lutador excluído com sucesso!");
     }
 
@@ -214,15 +201,11 @@ public class MainController implements Initializable {
         if (!DialogUtil.mostrarConfirmacao(
                 "Limpar Campos",
                 "Deseja realmente limpar todos os campos?")) {
-
-            lblMensagem.setText("Limpeza cancelada.");
             return;
         }
 
         limparCampos();
         carregarLutadores();
-
-        lblMensagem.setText("Campos limpos.");
     }
 
     @FXML
@@ -241,7 +224,7 @@ public class MainController implements Initializable {
 
         tblLutador.setItems(FXCollections.observableArrayList(listaLutadoresFiltrados));
 
-        lblMensagem.setText(listaLutadoresFiltrados.size() + " lutador(es) encontrado(s).");
+        DialogUtil.mostrarInformacao("Pesquisa", listaLutadoresFiltrados.size() + " lutador(es) encontrado(s).");
     }
 
     @FXML
@@ -250,8 +233,6 @@ public class MainController implements Initializable {
         ArrayList<CampeaoBrasileiroDTO> listaLutadoresDoBanco = campeaoBrasileiroDao.listar();
 
         tblLutador.setItems(FXCollections.observableArrayList(listaLutadoresDoBanco));
-
-        lblTotal.setText("Total de lutadores: " + listaLutadoresDoBanco.size());
     }
 
     @FXML
@@ -275,8 +256,13 @@ public class MainController implements Initializable {
 
     private CampeaoBrasileiroDTO obterDadosTela() {
 
-        if (txtNome.getText().trim().isEmpty() || cbCategoria.getValue() == null || cbGenero.getValue() == null) {
-            DialogUtil.mostrarErro("Campos Obrigatórios", "Por favor, preencha Nome, Categoria e Gênero.");
+        String nome = txtNome.getText().trim();
+        String categoria = cbCategoria.getValue() != null ? cbCategoria.getValue() : "";
+        String genero = cbGenero.getValue() != null ? cbGenero.getValue() : "";
+        String idade = txtIdade.getText().trim();
+        String sequencia = txtSequencia.getText().trim();
+
+        if (!LutadorValidator.validarLutador(nome, categoria, genero, idade, sequencia)) {
             return null;
         }
 
@@ -286,18 +272,11 @@ public class MainController implements Initializable {
             lutadorConstruidoDaTela.setId(Integer.parseInt(txtId.getText()));
         }
 
-        lutadorConstruidoDaTela.setNome(txtNome.getText().trim());
-        lutadorConstruidoDaTela.setCategoria(cbCategoria.getValue());
-        lutadorConstruidoDaTela.setGenero(cbGenero.getValue());
-
-        try {
-            lutadorConstruidoDaTela.setIdade(Integer.parseInt(txtIdade.getText()));
-            lutadorConstruidoDaTela.setSequenciaVitorias(Integer.parseInt(txtSequencia.getText()));
-        } catch (NumberFormatException excecaoFormatoNumero) {
-            DialogUtil.mostrarErro("Erro de Formatação", "Idade e Sequência de Vitórias devem ser números inteiros válidos.");
-            lblMensagem.setText("Preencha Idade e Sequência corretamente.");
-            return null;
-        }
+        lutadorConstruidoDaTela.setNome(nome);
+        lutadorConstruidoDaTela.setCategoria(categoria);
+        lutadorConstruidoDaTela.setGenero(genero);
+        lutadorConstruidoDaTela.setIdade(Integer.parseInt(idade));
+        lutadorConstruidoDaTela.setSequenciaVitorias(Integer.parseInt(sequencia));
 
         return lutadorConstruidoDaTela;
     }
