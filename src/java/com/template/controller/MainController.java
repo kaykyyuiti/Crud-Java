@@ -94,12 +94,29 @@ public class MainController implements Initializable {
 
     private void configurarTabela() {
 
-        colId.setCellValueFactory(new PropertyValueFactory<>("id"));
-        colNome.setCellValueFactory(new PropertyValueFactory<>("nome"));
-        colCategoria.setCellValueFactory(new PropertyValueFactory<>("categoria"));
-        colGenero.setCellValueFactory(new PropertyValueFactory<>("genero"));
-        colIdade.setCellValueFactory(new PropertyValueFactory<>("idade"));
-        colSequencia.setCellValueFactory(new PropertyValueFactory<>("sequenciaVitorias"));
+        colId.setCellValueFactory(
+                new PropertyValueFactory<>("id")
+        );
+
+        colNome.setCellValueFactory(
+                new PropertyValueFactory<>("nome")
+        );
+
+        colCategoria.setCellValueFactory(
+                new PropertyValueFactory<>("categoria")
+        );
+
+        colGenero.setCellValueFactory(
+                new PropertyValueFactory<>("genero")
+        );
+
+        colIdade.setCellValueFactory(
+                new PropertyValueFactory<>("idade")
+        );
+
+        colSequencia.setCellValueFactory(
+                new PropertyValueFactory<>("sequenciaVitorias")
+        );
     }
 
     private void configurarCombos() {
@@ -205,15 +222,8 @@ public class MainController implements Initializable {
     @FXML
     private void btnExcluirAction(ActionEvent evento) {
 
-        String erroValidacao = LutadorValidator.validarSelecaoParaExcluir(
-                txtId.getText()
-        );
-
-        if (erroValidacao != null) {
-            DialogUtil.mostrarErro(
-                    "Seleção Inválida",
-                    erroValidacao
-            );
+        if (!LutadorValidator.validarSelecaoParaExcluir(
+                txtId.getText())) {
             return;
         }
 
@@ -265,7 +275,9 @@ public class MainController implements Initializable {
                 );
 
         tblLutador.setItems(
-                FXCollections.observableArrayList(lutadoresEncontrados)
+                FXCollections.observableArrayList(
+                        lutadoresEncontrados
+                )
         );
 
         DialogUtil.mostrarInformacao(
@@ -294,13 +306,30 @@ public class MainController implements Initializable {
             return;
         }
 
-        txtId.setText(String.valueOf(lutadorSelecionado.getId()));
-        txtNome.setText(lutadorSelecionado.getNome());
-        cbCategoria.setValue(lutadorSelecionado.getCategoria());
-        cbGenero.setValue(lutadorSelecionado.getGenero());
-        txtIdade.setText(String.valueOf(lutadorSelecionado.getIdade()));
+        txtId.setText(
+                String.valueOf(lutadorSelecionado.getId())
+        );
+
+        txtNome.setText(
+                lutadorSelecionado.getNome()
+        );
+
+        cbCategoria.setValue(
+                lutadorSelecionado.getCategoria()
+        );
+
+        cbGenero.setValue(
+                lutadorSelecionado.getGenero()
+        );
+
+        txtIdade.setText(
+                String.valueOf(lutadorSelecionado.getIdade())
+        );
+
         txtSequencia.setText(
-                String.valueOf(lutadorSelecionado.getSequenciaVitorias())
+                String.valueOf(
+                        lutadorSelecionado.getSequenciaVitorias()
+                )
         );
 
         btnAtualizar.setDisable(false);
@@ -320,37 +349,36 @@ public class MainController implements Initializable {
                 : "";
 
         String idade = txtIdade.getText().trim();
+
         String sequencia = txtSequencia.getText().trim();
 
-        String erroValidacao = LutadorValidator.validarLutador(
+        if (!LutadorValidator.validarLutador(
                 nome,
                 categoria,
                 genero,
                 idade,
-                sequencia
-        );
-
-        if (erroValidacao != null) {
-
-            DialogUtil.mostrarErro(
-                    "Dados Inválidos",
-                    erroValidacao
-            );
-
+                sequencia)) {
             return null;
         }
 
-        CampeaoBrasileiroDTO lutador = new CampeaoBrasileiroDTO();
+        CampeaoBrasileiroDTO lutador =
+                new CampeaoBrasileiroDTO();
 
         if (!txtId.getText().isEmpty()) {
-            lutador.setId(Integer.parseInt(txtId.getText()));
+            lutador.setId(
+                    Integer.parseInt(txtId.getText())
+            );
         }
 
         lutador.setNome(nome);
         lutador.setCategoria(categoria);
         lutador.setGenero(genero);
-        lutador.setIdade(Integer.parseInt(idade));
-        lutador.setSequenciaVitorias(Integer.parseInt(sequencia));
+        lutador.setIdade(
+                Integer.parseInt(idade)
+        );
+        lutador.setSequenciaVitorias(
+                Integer.parseInt(sequencia)
+        );
 
         return lutador;
     }

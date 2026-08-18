@@ -2,9 +2,7 @@ package com.template.model.dao;
 
 import com.template.model.dto.CampeaoBrasileiroDTO;
 import com.template.model.Conexao;
-
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
+import com.template.util.DialogUtil;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -35,12 +33,7 @@ public class CampeaoBrasileiroDAO {
 
         } catch (SQLException excecaoBancoDados) {
             logger.log(Level.SEVERE, "Erro ao inserir lutador.", excecaoBancoDados);
-
-            Alert alertaErroInsercao = new Alert(AlertType.ERROR);
-            alertaErroInsercao.setTitle("Erro no Banco de Dados");
-            alertaErroInsercao.setHeaderText("Falha ao Cadastrar Lutador");
-            alertaErroInsercao.setContentText("Não foi possível salvar o lutador no banco de dados.\nDetalhes: " + excecaoBancoDados.getMessage());
-            alertaErroInsercao.showAndWait();
+            DialogUtil.mostrarErro("Erro no Banco de Dados", "Falha ao Cadastrar Lutador\n" + excecaoBancoDados.getMessage());
         }
     }
 
@@ -70,12 +63,7 @@ public class CampeaoBrasileiroDAO {
 
         } catch (SQLException excecaoBancoDados) {
             logger.log(Level.SEVERE, "Erro ao listar lutadores.", excecaoBancoDados);
-
-            Alert alertaErroListagem = new Alert(AlertType.ERROR);
-            alertaErroListagem.setTitle("Erro no Banco de Dados");
-            alertaErroListagem.setHeaderText("Falha ao Carregar Lista");
-            alertaErroListagem.setContentText("Não foi possível buscar a lista de lutadores no banco de dados.\nDetalhes: " + excecaoBancoDados.getMessage());
-            alertaErroListagem.showAndWait();
+            DialogUtil.mostrarErro("Erro no Banco de Dados", "Falha ao Carregar Lista\n" + excecaoBancoDados.getMessage());
         }
 
         return listaLutadoresEncontrados;
@@ -99,12 +87,7 @@ public class CampeaoBrasileiroDAO {
 
         } catch (SQLException excecaoBancoDados) {
             logger.log(Level.SEVERE, "Erro ao atualizar lutador.", excecaoBancoDados);
-
-            Alert alertaErroAtualizacao = new Alert(AlertType.ERROR);
-            alertaErroAtualizacao.setTitle("Erro no Banco de Dados");
-            alertaErroAtualizacao.setHeaderText("Falha ao Atualizar Lutador");
-            alertaErroAtualizacao.setContentText("Não foi possível atualizar as informações do lutador.\nDetalhes: " + excecaoBancoDados.getMessage());
-            alertaErroAtualizacao.showAndWait();
+            DialogUtil.mostrarErro("Erro no Banco de Dados", "Falha ao Atualizar Lutador\n" + excecaoBancoDados.getMessage());
         }
     }
 
@@ -121,12 +104,7 @@ public class CampeaoBrasileiroDAO {
 
         } catch (SQLException excecaoBancoDados) {
             logger.log(Level.SEVERE, "Erro ao excluir lutador.", excecaoBancoDados);
-
-            Alert alertaErroExclusao = new Alert(AlertType.ERROR);
-            alertaErroExclusao.setTitle("Erro no Banco de Dados");
-            alertaErroExclusao.setHeaderText("Falha ao Excluir Lutador");
-            alertaErroExclusao.setContentText("Não foi possível remover o lutador do banco de dados.\nDetalhes: " + excecaoBancoDados.getMessage());
-            alertaErroExclusao.showAndWait();
+            DialogUtil.mostrarErro("Erro no Banco de Dados", "Falha ao Excluir Lutador\n" + excecaoBancoDados.getMessage());
         }
     }
 }
