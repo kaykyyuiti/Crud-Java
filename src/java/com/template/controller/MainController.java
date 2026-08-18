@@ -4,15 +4,21 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.ResourceBundle;
 
-import com.template.model.dao.CampeaoBrasileiroDAO;
 import com.template.model.dto.CampeaoBrasileiroDTO;
+import com.template.service.CampeaoBrasileiroService;
 import com.template.util.DialogUtil;
+import com.template.util.TextFieldUtil;
 import com.template.validator.LutadorValidator;
+
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 
 public class MainController implements Initializable {
@@ -71,10 +77,22 @@ public class MainController implements Initializable {
     @FXML
     private TableColumn<CampeaoBrasileiroDTO, Integer> colSequencia;
 
-    private final CampeaoBrasileiroDAO campeaoBrasileiroDao = new CampeaoBrasileiroDAO();
+    private final CampeaoBrasileiroService campeaoBrasileiroService =
+            new CampeaoBrasileiroService();
 
     @Override
-    public void initialize(URL urlConexaoFxml, ResourceBundle recursosInterface) {
+    public void initialize(URL url, ResourceBundle recursosInterface) {
+
+        configurarTabela();
+        configurarCombos();
+        configurarCamposNumericos();
+        configurarBotoes();
+        configurarSelecaoTabela();
+
+        carregarLutadores();
+    }
+
+    private void configurarTabela() {
 
         colId.setCellValueFactory(new PropertyValueFactory<>("id"));
         colNome.setCellValueFactory(new PropertyValueFactory<>("nome"));
@@ -82,6 +100,9 @@ public class MainController implements Initializable {
         colGenero.setCellValueFactory(new PropertyValueFactory<>("genero"));
         colIdade.setCellValueFactory(new PropertyValueFactory<>("idade"));
         colSequencia.setCellValueFactory(new PropertyValueFactory<>("sequenciaVitorias"));
+    }
+
+    private void configurarCombos() {
 
         cbGenero.getItems().addAll(
                 "Masculino",
@@ -98,22 +119,29 @@ public class MainController implements Initializable {
                 "Peso Meio-Pesado",
                 "Peso Pesado"
         );
+    }
 
-        permitirSomenteNumeros(txtIdade);
-        permitirSomenteNumeros(txtSequencia);
+    private void configurarCamposNumericos() {
+
+        TextFieldUtil.permitirSomenteNumeros(txtIdade);
+        TextFieldUtil.permitirSomenteNumeros(txtSequencia);
+    }
+
+    private void configurarBotoes() {
 
         btnAtualizar.setDisable(true);
         btnExcluir.setDisable(true);
+    }
 
-        tblLutador.getSelectionModel().selectedItemProperty().addListener((obs, antigo, novo) -> {
-            carregarCampos();
-        });
+    private void configurarSelecaoTabela() {
 
-        carregarLutadores();
+        tblLutador.getSelectionModel()
+                .selectedItemProperty()
+                .addListener((observavel, antigo, novo) -> carregarCampos());
     }
 
     @FXML
-    private void btnAdicionarAction(ActionEvent eventoBotaoAdicionar) {
+    private void btnAdicionarAction(ActionEvent evento) {
 
         if (!DialogUtil.mostrarConfirmacao(
                 "Adicionar Lutador",
@@ -121,32 +149,35 @@ public class MainController implements Initializable {
             return;
         }
 
-        CampeaoBrasileiroDTO lutadorParaCadastrar = obterDadosTela();
-        if (lutadorParaCadastrar == null) {
+        CampeaoBrasileiroDTO lutador = obterDadosTela();
+
+        if (lutador == null) {
             return;
         }
 
-        ArrayList<CampeaoBrasileiroDTO> listaLutadoresCadastrados = campeaoBrasileiroDao.listar();
+        try {
 
-        for (CampeaoBrasileiroDTO lutadorExistente : listaLutadoresCadastrados) {
-            if (lutadorExistente.getNome().equalsIgnoreCase(lutadorParaCadastrar.getNome())
-                    && lutadorExistente.getCategoria().equalsIgnoreCase(lutadorParaCadastrar.getCategoria())) {
+            campeaoBrasileiroService.cadastrar(lutador);
 
-                DialogUtil.mostrarErro("Lutador Duplicado", "O lutador " + lutadorParaCadastrar.getNome() + " já está cadastrado nesta categoria!");
-                return;
-            }
+            carregarLutadores();
+            limparCampos();
+
+            DialogUtil.mostrarInformacao(
+                    "Sucesso",
+                    "Lutador cadastrado com sucesso!"
+            );
+
+        } catch (IllegalArgumentException erro) {
+
+            DialogUtil.mostrarErro(
+                    "Lutador Duplicado",
+                    erro.getMessage()
+            );
         }
-
-        campeaoBrasileiroDao.inserir(lutadorParaCadastrar);
-
-        carregarLutadores();
-        limparCampos();
-
-        DialogUtil.mostrarInformacao("Sucesso", "Lutador cadastrado com sucesso!");
     }
 
     @FXML
-    private void btnAtualizarAction(ActionEvent eventoBotaoAtualizar) {
+    private void btnAtualizarAction(ActionEvent evento) {
 
         if (!DialogUtil.mostrarConfirmacao(
                 "Atualizar Lutador",
@@ -154,49 +185,66 @@ public class MainController implements Initializable {
             return;
         }
 
-        CampeaoBrasileiroDTO lutadorParaAtualizar = obterDadosTela();
-        if (lutadorParaAtualizar == null) {
+        CampeaoBrasileiroDTO lutador = obterDadosTela();
+
+        if (lutador == null) {
             return;
         }
 
-        campeaoBrasileiroDao.atualizar(lutadorParaAtualizar);
+        campeaoBrasileiroService.atualizar(lutador);
 
         carregarLutadores();
         limparCampos();
 
-        DialogUtil.mostrarInformacao("Sucesso", "Lutador atualizado com sucesso!");
+        DialogUtil.mostrarInformacao(
+                "Sucesso",
+                "Lutador atualizado com sucesso!"
+        );
     }
 
     @FXML
-    private void btnExcluirAction(ActionEvent eventoBotaoExcluir) {
+    private void btnExcluirAction(ActionEvent evento) {
 
-        if (!LutadorValidator.validarSelecaoParaExcluir(txtId.getText())) {
+        String erroValidacao = LutadorValidator.validarSelecaoParaExcluir(
+                txtId.getText()
+        );
+
+        if (erroValidacao != null) {
+            DialogUtil.mostrarErro(
+                    "Seleção Inválida",
+                    erroValidacao
+            );
             return;
         }
 
-        CampeaoBrasileiroDTO lutadorSelecionadoParaExclusao = tblLutador.getSelectionModel().getSelectedItem();
+        CampeaoBrasileiroDTO lutadorSelecionado =
+                tblLutador.getSelectionModel().getSelectedItem();
 
-        String nomeLutadorExclusao = lutadorSelecionadoParaExclusao != null
-                ? lutadorSelecionadoParaExclusao.getNome()
+        String nomeLutador = lutadorSelecionado != null
+                ? lutadorSelecionado.getNome()
                 : "este lutador";
 
         if (!DialogUtil.mostrarConfirmacao(
                 "Excluir Lutador",
-                "Deseja realmente excluir:\n\n" + nomeLutadorExclusao + "?")) {
+                "Deseja realmente excluir:\n\n" + nomeLutador + "?")) {
             return;
         }
 
-        int idLutadorParaExcluir = Integer.parseInt(txtId.getText());
-        campeaoBrasileiroDao.deletar(idLutadorParaExcluir);
+        int id = Integer.parseInt(txtId.getText());
+
+        campeaoBrasileiroService.excluir(id);
 
         carregarLutadores();
         limparCampos();
 
-        DialogUtil.mostrarInformacao("Sucesso", "Lutador excluído com sucesso!");
+        DialogUtil.mostrarInformacao(
+                "Sucesso",
+                "Lutador excluído com sucesso!"
+        );
     }
 
     @FXML
-    private void btnLimparAction(ActionEvent eventoBotaoLimpar) {
+    private void btnLimparAction(ActionEvent evento) {
 
         if (!DialogUtil.mostrarConfirmacao(
                 "Limpar Campos",
@@ -209,76 +257,102 @@ public class MainController implements Initializable {
     }
 
     @FXML
-    private void btnPesquisarAction(ActionEvent eventoBotaoPesquisar) {
+    private void btnPesquisarAction(ActionEvent evento) {
 
-        String textoPesquisaNome = txtPesquisar.getText().toLowerCase();
+        ArrayList<CampeaoBrasileiroDTO> lutadoresEncontrados =
+                campeaoBrasileiroService.pesquisarPorNome(
+                        txtPesquisar.getText()
+                );
 
-        ArrayList<CampeaoBrasileiroDTO> listaTodosLutadores = campeaoBrasileiroDao.listar();
-        ArrayList<CampeaoBrasileiroDTO> listaLutadoresFiltrados = new ArrayList<>();
+        tblLutador.setItems(
+                FXCollections.observableArrayList(lutadoresEncontrados)
+        );
 
-        for (CampeaoBrasileiroDTO lutadorDaLista : listaTodosLutadores) {
-            if (lutadorDaLista.getNome().toLowerCase().contains(textoPesquisaNome)) {
-                listaLutadoresFiltrados.add(lutadorDaLista);
-            }
-        }
-
-        tblLutador.setItems(FXCollections.observableArrayList(listaLutadoresFiltrados));
-
-        DialogUtil.mostrarInformacao("Pesquisa", listaLutadoresFiltrados.size() + " lutador(es) encontrado(s).");
+        DialogUtil.mostrarInformacao(
+                "Pesquisa",
+                lutadoresEncontrados.size()
+                        + " lutador(es) encontrado(s)."
+        );
     }
 
-    @FXML
     private void carregarLutadores() {
 
-        ArrayList<CampeaoBrasileiroDTO> listaLutadoresDoBanco = campeaoBrasileiroDao.listar();
+        ArrayList<CampeaoBrasileiroDTO> lutadores =
+                campeaoBrasileiroService.listar();
 
-        tblLutador.setItems(FXCollections.observableArrayList(listaLutadoresDoBanco));
+        tblLutador.setItems(
+                FXCollections.observableArrayList(lutadores)
+        );
     }
 
-    @FXML
     private void carregarCampos() {
 
-        CampeaoBrasileiroDTO lutadorSelecionadoNaTabela = tblLutador.getSelectionModel().getSelectedItem();
+        CampeaoBrasileiroDTO lutadorSelecionado =
+                tblLutador.getSelectionModel().getSelectedItem();
 
-        if (lutadorSelecionadoNaTabela != null) {
-
-            txtId.setText(String.valueOf(lutadorSelecionadoNaTabela.getId()));
-            txtNome.setText(lutadorSelecionadoNaTabela.getNome());
-            cbCategoria.setValue(lutadorSelecionadoNaTabela.getCategoria());
-            cbGenero.setValue(lutadorSelecionadoNaTabela.getGenero());
-            txtIdade.setText(String.valueOf(lutadorSelecionadoNaTabela.getIdade()));
-            txtSequencia.setText(String.valueOf(lutadorSelecionadoNaTabela.getSequenciaVitorias()));
-
-            btnAtualizar.setDisable(false);
-            btnExcluir.setDisable(false);
+        if (lutadorSelecionado == null) {
+            return;
         }
+
+        txtId.setText(String.valueOf(lutadorSelecionado.getId()));
+        txtNome.setText(lutadorSelecionado.getNome());
+        cbCategoria.setValue(lutadorSelecionado.getCategoria());
+        cbGenero.setValue(lutadorSelecionado.getGenero());
+        txtIdade.setText(String.valueOf(lutadorSelecionado.getIdade()));
+        txtSequencia.setText(
+                String.valueOf(lutadorSelecionado.getSequenciaVitorias())
+        );
+
+        btnAtualizar.setDisable(false);
+        btnExcluir.setDisable(false);
     }
 
     private CampeaoBrasileiroDTO obterDadosTela() {
 
         String nome = txtNome.getText().trim();
-        String categoria = cbCategoria.getValue() != null ? cbCategoria.getValue() : "";
-        String genero = cbGenero.getValue() != null ? cbGenero.getValue() : "";
+
+        String categoria = cbCategoria.getValue() != null
+                ? cbCategoria.getValue()
+                : "";
+
+        String genero = cbGenero.getValue() != null
+                ? cbGenero.getValue()
+                : "";
+
         String idade = txtIdade.getText().trim();
         String sequencia = txtSequencia.getText().trim();
 
-        if (!LutadorValidator.validarLutador(nome, categoria, genero, idade, sequencia)) {
+        String erroValidacao = LutadorValidator.validarLutador(
+                nome,
+                categoria,
+                genero,
+                idade,
+                sequencia
+        );
+
+        if (erroValidacao != null) {
+
+            DialogUtil.mostrarErro(
+                    "Dados Inválidos",
+                    erroValidacao
+            );
+
             return null;
         }
 
-        CampeaoBrasileiroDTO lutadorConstruidoDaTela = new CampeaoBrasileiroDTO();
+        CampeaoBrasileiroDTO lutador = new CampeaoBrasileiroDTO();
 
         if (!txtId.getText().isEmpty()) {
-            lutadorConstruidoDaTela.setId(Integer.parseInt(txtId.getText()));
+            lutador.setId(Integer.parseInt(txtId.getText()));
         }
 
-        lutadorConstruidoDaTela.setNome(nome);
-        lutadorConstruidoDaTela.setCategoria(categoria);
-        lutadorConstruidoDaTela.setGenero(genero);
-        lutadorConstruidoDaTela.setIdade(Integer.parseInt(idade));
-        lutadorConstruidoDaTela.setSequenciaVitorias(Integer.parseInt(sequencia));
+        lutador.setNome(nome);
+        lutador.setCategoria(categoria);
+        lutador.setGenero(genero);
+        lutador.setIdade(Integer.parseInt(idade));
+        lutador.setSequenciaVitorias(Integer.parseInt(sequencia));
 
-        return lutadorConstruidoDaTela;
+        return lutador;
     }
 
     private void limparCampos() {
@@ -298,14 +372,5 @@ public class MainController implements Initializable {
         btnExcluir.setDisable(true);
 
         txtNome.requestFocus();
-    }
-
-    private void permitirSomenteNumeros(TextField campoTextoParaFiltrar) {
-
-        campoTextoParaFiltrar.textProperty().addListener((propriedadeObservavel, valorAnteriorTexto, novoValorTexto) -> {
-            if (!novoValorTexto.matches("\\d*")) {
-                campoTextoParaFiltrar.setText(novoValorTexto.replaceAll("[^\\d]", ""));
-            }
-        });
     }
 }
