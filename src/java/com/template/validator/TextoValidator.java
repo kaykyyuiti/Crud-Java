@@ -1,35 +1,28 @@
 package com.template.validator;
 
-public class TextoValidator {
+public class TextoValidator implements Validator<String> {
+    private final String nomeCampo;
+    private final String valor;
 
-    public static boolean validarTamanhoMinimo(String texto, int tamanhoMinimo) {
-
-        if (texto == null) {
-            return false;
-        }
-
-        return texto.length() >= tamanhoMinimo;
+    public TextoValidator(String nomeCampo, String valor) {
+        this.nomeCampo = nomeCampo;
+        this.valor = valor;
     }
 
-    public static boolean validarTamanhoMaximo(String texto, int tamanhoMaximo) {
-
-        if (texto == null) {
-            return false;
-        }
-
-        return texto.length() <= tamanhoMaximo;
+    @Override
+    public boolean validar(String valorAtual) {
+        if (this.valor == null || this.valor.trim().isEmpty()) return true;
+        // Permite apenas letras e espaços
+        return this.valor.matches("^[a-zA-ZÀ-ÿ\\s]+$");
     }
 
-    public static boolean validarTamanho(
-            String texto,
-            int tamanhoMinimo,
-            int tamanhoMaximo) {
+    @Override
+    public String getMensagemErro() {
+        return "O campo " + nomeCampo + " deve conter apenas letras.";
+    }
 
-        if (texto == null) {
-            return false;
-        }
-
-        return texto.length() >= tamanhoMinimo
-                && texto.length() <= tamanhoMaximo;
+    @Override
+    public String getValor() {
+        return this.valor;
     }
 }
