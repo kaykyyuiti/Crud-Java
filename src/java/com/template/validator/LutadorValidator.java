@@ -4,9 +4,9 @@ import com.template.util.DialogUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LutadorValidator {
+public class LutadorValidator implements ILutadorValidator{
 
-    public static boolean validarLutador(String nome, String categoria, String genero, String idade, String sequenciaVitorias) {
+    public boolean validarLutador(String nome, String categoria, String genero, String idade, String sequenciaVitorias) {
         List<Validator<String>> validadores = new ArrayList<>();
 
         validadores.add(new CampoObrigatorioValidator("Nome", nome));
