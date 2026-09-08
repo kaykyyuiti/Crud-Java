@@ -12,7 +12,6 @@ public class TextoValidator implements Validator<String> {
     @Override
     public boolean validar(String valorAtual) {
         if (this.valor == null || this.valor.trim().isEmpty()) return true;
-        // Permite apenas letras e espaços
         return this.valor.matches("^[a-zA-ZÀ-ÿ\\s]+$");
     }
 

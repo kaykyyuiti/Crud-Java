@@ -14,7 +14,7 @@ public class IdadeValidator implements Validator<String> {
         if (this.valor == null || this.valor.trim().isEmpty()) return true;
         try {
             int idade = Integer.parseInt(this.valor);
-            return idade >= 18 && idade <= 100; // Valida idade mínima/máxima
+            return idade >= 18 && idade <= 100;
         } catch (NumberFormatException e) {
             return false;
         }

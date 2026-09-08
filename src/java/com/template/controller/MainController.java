@@ -98,7 +98,6 @@ public class MainController implements Initializable {
 
     @FXML
     private void btnAtualizarAction(ActionEvent event) {
-        // Corrigido: Validando se há um ID preenchido no campo e validando os dados com o ILutadorValidator
         if (!txtId.getText().isEmpty() && lutadorValidator != null && lutadorValidator.validarLutador(
                 txtNome.getText().trim(),
                 cbCategoria.getValue() != null ? cbCategoria.getValue() : "",
@@ -121,7 +120,6 @@ public class MainController implements Initializable {
 
     @FXML
     private void btnExcluirAction(ActionEvent event) {
-        // Corrigido: Verificação direta se o ID do campo existe
         if (!txtId.getText().isEmpty()) {
 
             CampeaoBrasileiroDTO lutadorSelecionado = tblLutador.getSelectionModel().getSelectedItem();
